@@ -1,4 +1,4 @@
-.idea/
-venv/
-config/*.json
-__pycache__/*
+/.idea/
+/venv/
+/config/*.json
+__pycache__/
