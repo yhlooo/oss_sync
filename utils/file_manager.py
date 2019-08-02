@@ -26,7 +26,11 @@ class FileManager(object):
     def write_file(self, file_name: str, data: bytes):
         path = os.path.join(self.root_dir, file_name)
         if not os.path.isdir(os.path.dirname(path)):
-            os.makedirs(os.path.dirname(path))
+            try:
+                os.makedirs(os.path.dirname(path))
+            except FileExistsError as e:
+                if isinstance(e, Exception):
+                    pass
 
         with open(path, 'wb') as file:
             file.write(data)

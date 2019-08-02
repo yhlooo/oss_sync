@@ -35,13 +35,26 @@ class TencentCOSBucket(OSSBucket):
         return res
 
     def put_object(self, obj_name: str, data: bytes) -> bool:
-        self.client.put_object(self.bucket, data, obj_name, EnableMD5=True)
+        try:
+            self.client.put_object(self.bucket, data, obj_name, EnableMD5=True)
+        except Exception as e:
+            logging.ERROR(e)
+            return False
         return True
 
     def get_object(self, obj_name: str) -> bytes:
-        response = self.client.get_object(self.bucket, obj_name)
-        return response['Body'].get_raw_stream().read()
+        try:
+            response = self.client.get_object(self.bucket, obj_name)
+            file = response['Body'].get_raw_stream().read()
+        except Exception as e:
+            logging.ERROR(e)
+            return b''
+        return file
 
     def del_object(self, obj_name: str) -> bool:
-        self.client.delete_object(self.bucket, obj_name)
+        try:
+            self.client.delete_object(self.bucket, obj_name)
+        except Exception as e:
+            logging.ERROR(e)
+            return False
         return True

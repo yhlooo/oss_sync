@@ -46,33 +46,26 @@ class OSSSynchronizer(object):
                         file_md5 = md5(data).hexdigest().lower()
                         if file_md5 != thing[2].lower():  # 内容不一致，上传本地文件到OSS
                             res = self.oss_bucket.put_object(thing[0], data)
-                            print('{status} [M] {filename}'.format(status=res, filename=thing[0]))
+                            print('{status} [M] {filename}'.format(status='OK  ' if res else 'Fail', filename=thing[0]))
                     else:  # 文件不在OSS，上传本地文件到OSS
                         data = self.local_dir.read_file(thing[0])
                         res = self.oss_bucket.put_object(thing[0], data)
-                        print('{status} [+] {filename}'.format(status=res, filename=thing[0]))
+                        print('{status} [+] {filename}'.format(status='OK  ' if res else 'Fail', filename=thing[0]))
                 else:  # 文件不在本地，删除OSS上的对应对象
                     res = self.oss_bucket.del_object(thing[0])
-                    print('{status} [-] {filename}'.format(status=res, filename=thing[0]))
+                    print('{status} [-] {filename}'.format(status='OK  ' if res else 'Fail', filename=thing[0]))
 
         sync_lists = self.sync_checking()
         threads_num = self.threads_num
         if len(sync_lists) < self.threads_num:
             threads_num = len(sync_lists)
-        target_num = len(sync_lists) // threads_num
-        target_num_mod = len(sync_lists) % threads_num
+        target_num = len(sync_lists) // threads_num + (1 if len(sync_lists) % threads_num != 0 else 0)
         threads = []
         for i in range(threads_num):
-            if i < target_num_mod:
-                threads.append(threading.Thread(
-                    target=sync,
-                    args=(sync_lists[(target_num + 1) * i:(target_num + 1) * (i + 1)],)
-                ))
-            else:
-                threads.append(threading.Thread(
-                    target=sync,
-                    args=(sync_lists[target_num * i + target_num_mod:target_num * (i + 1) + target_num_mod],)
-                ))
+            threads.append(threading.Thread(
+                target=sync,
+                args=(sync_lists[(target_num + 1) * i:(target_num + 1) * (i + 1)],)
+            ))
 
         for t in threads:
             t.start()
@@ -92,34 +85,27 @@ class OSSSynchronizer(object):
                             res = self.oss_bucket.get_object(thing[0])
                             if res:
                                 self.local_dir.write_file(thing[0], res)
-                            print('{status} [M] {filename}'.format(status='OK' if res else 'Fail', filename=thing[0]))
+                            print('{status} [M] {filename}'.format(status='OK  ' if res else 'Fail', filename=thing[0]))
                     else:  # 文件不在OSS，删除本地文件
                         self.local_dir.del_file(thing[0])
-                        print('{status} [-] {filename}'.format(status='OK', filename=thing[0]))
+                        print('{status} [-] {filename}'.format(status='OK  ', filename=thing[0]))
                 else:  # 文件不在本地，下载OSS上的对应对象
                     res = self.oss_bucket.get_object(thing[0])
                     if res:
                         self.local_dir.write_file(thing[0], res)
-                    print('{status} [+] {filename}'.format(status='OK' if res else 'Fail', filename=thing[0]))
+                    print('{status} [+] {filename}'.format(status='OK  ' if res else 'Fail', filename=thing[0]))
 
         sync_lists = self.sync_checking()
         threads_num = self.threads_num
         if len(sync_lists) < self.threads_num:
             threads_num = len(sync_lists)
-        target_num = len(sync_lists) // threads_num
-        target_num_mod = len(sync_lists) % threads_num
+        target_num = len(sync_lists) // threads_num + (1 if len(sync_lists) % threads_num != 0 else 0)
         threads = []
         for i in range(threads_num):
-            if i < target_num_mod:
-                threads.append(threading.Thread(
-                    target=sync,
-                    args=(sync_lists[(target_num + 1) * i:(target_num + 1) * (i + 1)], )
-                ))
-            else:
-                threads.append(threading.Thread(
-                    target=sync,
-                    args=(sync_lists[target_num * i + target_num_mod:target_num * (i + 1) + target_num_mod],)
-                ))
+            threads.append(threading.Thread(
+                target=sync,
+                args=(sync_lists[(target_num + 1) * i:(target_num + 1) * (i + 1)], )
+            ))
 
         for t in threads:
             t.start()

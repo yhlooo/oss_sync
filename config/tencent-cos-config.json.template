@@ -1,0 +1,7 @@
+{
+  "secret_id": "your secret id",
+  "secret_key": "your secret key",
+  "bucket": "bucket-name",
+  "region": "region",
+  "scheme": "`https` or `http`"
+}

@@ -1,0 +1,6 @@
+{
+  "oss_type": "`tencent-cos` or `aliyun-oss`",
+  "oss_config": "config/tencent-cos.json",
+  "local_dir": "./test",
+  "direction": "`local-to-remote` or `remote-to-local`"
+}
