@@ -1,6 +1,14 @@
-{
-  "oss_type": "`tencent-cos` or `aliyun-oss`",
-  "oss_config": "config/tencent-cos.json",
-  "local_dir": "./test",
-  "direction": "`local-to-remote` or `remote-to-local`"
-}
+[
+  {
+    "oss_type": "`tencent-cos` or `aliyun-oss`",
+    "oss_config": "config/tencent-cos-config.json",
+    "local_dir": "./test",
+    "direction": "`local-to-remote` or `remote-to-local`"
+  },
+  {
+    "oss_type": "`tencent-cos` or `aliyun-oss`",
+    "oss_config": "config/aliyun-oss-config.json",
+    "local_dir": "./test",
+    "direction": "`local-to-remote` or `remote-to-local`"
+  }
+]
