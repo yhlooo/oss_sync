@@ -361,4 +361,4 @@ class OSSBucket:
 
     def get_content_type(self, obj_name: str) -> str:
         ext = f'.{obj_name.split(".")[-1]}' if '.' in obj_name else '.whatever'
-        return self.content_type_map.get(ext[0], 'application/octet-stream')
+        return self.content_type_map.get(ext, 'application/octet-stream')
