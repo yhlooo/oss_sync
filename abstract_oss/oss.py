@@ -359,6 +359,6 @@ class OSSBucket:
     def del_object(self, obj_name: str) -> bool:
         raise NotImplementedError('`.del_object` 方法必须被实现')
 
-    def get_content_type(self, obj_name):
-        ext = self.filename_ext.findall(obj_name)
+    def get_content_type(self, obj_name: str) -> str:
+        ext = f'.{obj_name.split(".")[-1]}' if '.' in obj_name else '.whatever'
         return self.content_type_map.get(ext[0], 'application/octet-stream')
