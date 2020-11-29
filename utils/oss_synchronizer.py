@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import threading
 from hashlib import md5
 from abstract_oss import OSSBucket

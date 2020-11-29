@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 from typing import Dict
 from qcloud_cos import CosConfig

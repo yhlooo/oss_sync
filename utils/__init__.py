@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .file_manager import FileManager
 from .oss_synchronizer import OSSSynchronizer
 
