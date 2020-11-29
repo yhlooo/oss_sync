@@ -1,4 +1,7 @@
-/.idea/
-/venv/
-/config/*.json
+.idea/
+venv/
+
 __pycache__/
+*.pyc
+
+/config/*.json
