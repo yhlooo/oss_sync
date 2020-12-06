@@ -10,7 +10,7 @@ import os
 from typing import List
 
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(f'oss_sync.{__name__}')
 
 
 class FileManager(object):

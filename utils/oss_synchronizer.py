@@ -14,7 +14,7 @@ from oss import OssBucket
 from .file_manager import FileManager
 
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(f'oss_sync.{__name__}')
 
 
 # 定义一些常用类型别名

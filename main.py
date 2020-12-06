@@ -21,7 +21,7 @@ from utils import FileManager, OSSSynchronizer
 
 
 # 日志配置
-logger = logging.getLogger()
+logger = logging.getLogger('oss_sync')
 
 normal_formatter = logging.Formatter('%(levelname)s: %(message)s')
 debug_formatter = logging.Formatter(

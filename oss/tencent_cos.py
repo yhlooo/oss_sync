@@ -14,7 +14,7 @@ from qcloud_cos.cos_exception import CosClientError, CosServiceError
 from .abstract_oss import OssBucket
 
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(f'oss_sync.{__name__}')
 
 
 class QcloudCosBucket(OssBucket):
