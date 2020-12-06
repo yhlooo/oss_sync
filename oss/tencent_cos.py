@@ -18,7 +18,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class QcloudCosBucket(OssBucket):
-    def __init__(self, config: Dict[str, str]):
+    def __init__(self, config: Dict[str, str]) -> None:
         """初始化
 
         Args:

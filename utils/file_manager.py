@@ -14,7 +14,14 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class FileManager(object):
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str) -> None:
+        """初始化
+
+        Args:
+            root_dir: 文件根文件夹
+
+        """
+
         self.root_dir: str = root_dir
 
     def list_file(self) -> List[str]:
@@ -105,7 +112,7 @@ class FileManager(object):
             logger.debug(f'rm \'{path}\'')
             os.remove(path)
 
-    def clear_empty_folder(self):
+    def clear_empty_folder(self) -> None:
         """清理空文件夹
 
         Notes:
