@@ -6,6 +6,7 @@ from hashlib import sha1, md5
 import requests
 import time
 from typing import Dict
+from urllib.parse import quote
 from xml.etree import ElementTree
 
 from abstract_oss import OSSBucket
@@ -22,32 +23,47 @@ class AliyunOSSBucket(OSSBucket):
             raise TypeError('缺少必要的初始化参数')
 
     def make_auth(self, auth_info: dict) -> str:
+        """计算签名
+
+        Args:
+            auth_info: 与签名相关的信息
+
+        Returns:
+            签名结果
+        """
         verb = auth_info.get('verb')
         content_md5 = auth_info.get('content-md5') if auth_info.get('content-md5') else ''
         content_type = auth_info.get('content-type') if auth_info.get('content-type') else ''
         date = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
-        canonicalized_oss_headers = \
-            auth_info.get('canonicalized_oss_headers') if auth_info.get('canonicalized_oss_headers') else ''
-        canonicalized_resource = \
-            auth_info.get('canonicalized_resource') if \
-            auth_info.get('canonicalized_resource') else '/' + self.bucket + '/'
+        canonicalized_oss_headers = (
+            auth_info.get('canonicalized_oss_headers')
+            if auth_info.get('canonicalized_oss_headers')
+            else ''
+        )
+        canonicalized_resource = (
+            auth_info.get('canonicalized_resource')
+            if auth_info.get('canonicalized_resource')
+            else '/' + self.bucket + '/'
+        )
+
+        string_to_sign = (
+            f'{verb}\n'
+            f'{content_md5}\n'
+            f'{content_type}\n'
+            f'{date}\n'
+            f'{canonicalized_oss_headers}{canonicalized_resource}'
+        )
+        print(string_to_sign)
 
         signature = base64.b64encode(
             hmac.new(
-                self.access_key_secret.encode(),
-                (
-                        verb + '\n' +
-                        content_md5 + '\n' +
-                        content_type + '\n' +
-                        date + '\n' +
-                        canonicalized_oss_headers +
-                        canonicalized_resource
-                ).encode(),
+                self.access_key_secret.encode('utf-8'),
+                string_to_sign.encode('utf-8'),
                 sha1
             ).digest()
-        ).decode()
+        ).decode('utf-8')
 
-        return 'OSS {ak_id}:{signature}'.format(ak_id=self.access_key_id, signature=signature)
+        return f'OSS {self.access_key_id}:{signature}'
 
     def list_objects(self) -> list:
         objs = []
@@ -96,7 +112,8 @@ class AliyunOSSBucket(OSSBucket):
                 'canonicalized_resource': '/' + self.bucket + '/' + obj_name
             })
         }
-        res = requests.put('https://' + self.host + '/' + obj_name, data=data, headers=headers)
+        res = requests.put('https://' + self.host + '/' + quote(obj_name), data=data, headers=headers)
+        print(res.status_code, res.text, res.headers)
         return res.status_code == 200
 
     def get_object(self, obj_name: str) -> bytes:
@@ -108,7 +125,7 @@ class AliyunOSSBucket(OSSBucket):
                 'canonicalized_resource': '/' + self.bucket + '/' + obj_name
             })
         }
-        res = requests.get('https://' + self.host + '/' + obj_name, headers=headers)
+        res = requests.get('https://' + self.host + '/' + quote(obj_name), headers=headers)
         return res.content
 
     def del_object(self, obj_name: str) -> bool:
@@ -120,5 +137,5 @@ class AliyunOSSBucket(OSSBucket):
                 'canonicalized_resource': '/' + self.bucket + '/' + obj_name
             })
         }
-        res = requests.delete('https://' + self.host + '/' + obj_name, headers=headers)
+        res = requests.delete('https://' + self.host + '/' + quote(obj_name), headers=headers)
         return res.status_code == 204

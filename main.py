@@ -226,7 +226,7 @@ def parser_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     )
 
     if args is None:
-        args = sys.argv
+        args = sys.argv[1:]
 
     return parser.parse_args(args)
 
