@@ -23,7 +23,7 @@ SyncList = List[Tuple[str, bool, Optional[str]]]
 
 class OSSSynchronizer(object):
 
-    def __init__(self, local_dir: FileManager, oss_bucket: OssBucket, threads_num: int = 64) -> None:
+    def __init__(self, local_dir: FileManager, oss_bucket: OssBucket, threads_num: int = 32) -> None:
         """初始化
 
         Args:
