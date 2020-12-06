@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import re
+"""抽象的 OSS
+
+该模块定义了一个抽象的 OSS Bucket 类
+"""
+
+from typing import Dict, List, Optional, Tuple
 
 
-class OSSBucket:
-    content_type_map = {
+class OssBucket:
+    content_type_map: Dict[str, str] = {
         '.*': 'application/octet-stream',
         '.001': 'application/x-001',
         '.301': 'application/x-301',
@@ -347,20 +352,76 @@ class OSSBucket:
         '.apk': 'application/vnd.android.package-archive',
         '.xap': 'application/x-silverlight-app',
     }
-    filename_ext = re.compile(r'(\.[^.]+?)$')
 
-    def list_objects(self) -> list:
-        raise NotImplementedError('`.list_objects` 方法必须被实现')
+    def list_objects(self) -> List[Tuple[str, str]]:
+        """列出对象
 
-    def put_object(self, obj_name: str, data: bytes) -> bool:
-        raise NotImplementedError('`.put_object` 方法必须被实现')
+        列出 Bucket 中的对象
 
-    def get_object(self, obj_name: str) -> bytes:
-        raise NotImplementedError('`.get_object` 方法必须被实现')
+        Returns:
+            [
+                (obj_key_1, obj_md5_1),
+                (obj_key_2, obj_md5_2),
+                (obj_key_3, obj_md5_3),
+                # ...
+            ]
 
-    def del_object(self, obj_name: str) -> bool:
-        raise NotImplementedError('`.del_object` 方法必须被实现')
+        """
+        raise NotImplementedError('OSSBucket 的子类中 .list_objects 方法必须被实现')
 
-    def get_content_type(self, obj_name: str) -> str:
-        ext = f'.{obj_name.split(".")[-1]}' if '.' in obj_name else '.whatever'
+    def put_object(self, obj_key: str, data: bytes) -> bool:
+        """上传对象
+
+        上传对象到 Bucket
+
+        Args:
+            obj_key: 对象 Key
+            data: 对象内容
+
+        Returns:
+            是否成功
+
+        """
+        raise NotImplementedError('OSSBucket 的子类中 .put_object 方法必须被实现')
+
+    def get_object(self, obj_key: str) -> Optional[bytes]:
+        """下载对象
+
+        下载 Bucket 中的对象
+
+        Args:
+            obj_key: 对象 Key
+
+        Returns:
+            如果成功返回对象内容，否则返回 None
+
+        """
+        raise NotImplementedError('OSSBucket 的子类中 .get_object 方法必须被实现')
+
+    def del_object(self, obj_key: str) -> bool:
+        """删除对象
+
+        删除 Bucket 中的对象
+
+        Args:
+            obj_key: 对象 Key
+
+        Returns:
+            是否成功
+
+        """
+        raise NotImplementedError('OSSBucket 的子类中 .del_object 方法必须被实现')
+
+    def get_content_type(self, obj_key: str) -> str:
+        """获取对象 Content-Type
+
+        Args:
+            obj_key: 对象 Key
+
+        Returns:
+            可用于请求头 Content-Type 的内容
+
+        """
+
+        ext = f'.{obj_key.split(".")[-1]}' if '.' in obj_key else '.whatever'
         return self.content_type_map.get(ext, 'application/octet-stream')

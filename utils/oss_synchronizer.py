@@ -2,7 +2,7 @@
 
 import threading
 from hashlib import md5
-from abstract_oss import OSSBucket
+from oss import OssBucket
 from .file_manager import FileManager
 
 

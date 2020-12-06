@@ -16,8 +16,7 @@ from typing import Callable, Dict, List, Optional, Union
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from tencent_cos import TencentCOSBucket
-from aliyun_oss import AliyunOSSBucket
+from oss import AliyunOssBucket, QcloudCosBucket
 from utils import FileManager, OSSSynchronizer
 
 
@@ -273,9 +272,9 @@ def main() -> None:
             exit(1)
 
         if oss_type == 'tencent-cos':
-            bucket = TencentCOSBucket(oss_config)
+            bucket = QcloudCosBucket(oss_config)
         else:
-            bucket = AliyunOSSBucket(oss_config)
+            bucket = AliyunOssBucket(oss_config)
 
         file_manager = FileManager(local_dir)
         oss_synchronizer = OSSSynchronizer(file_manager, bucket)
