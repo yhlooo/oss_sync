@@ -84,6 +84,10 @@ class QcloudCosBucket(OssBucket):
 
             logger.debug(f'next_marker = \'{marker}\'')
 
+        logger.debug(f'Remote Objects:')
+        for i in objs_list:
+            logger.debug(f'  - {i}')
+
         return objs_list
 
     def put_object(self, obj_key: str, data: bytes) -> bool:

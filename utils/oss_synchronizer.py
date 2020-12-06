@@ -7,7 +7,7 @@ from .file_manager import FileManager
 
 
 class OSSSynchronizer(object):
-    def __init__(self, local_dir: FileManager, oss_bucket: OSSBucket):
+    def __init__(self, local_dir: FileManager, oss_bucket: OssBucket):
         self.local_dir = local_dir
         self.oss_bucket = oss_bucket
         self.threads_num = 64
