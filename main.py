@@ -21,12 +21,20 @@ from utils import FileManager, OSSSynchronizer
 
 
 # 日志配置
-logger = logging.getLogger(__name__)
-formatter = logging.Formatter('%(levelname)s: %(message)s')
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
-logger.setLevel(logging.INFO)
+logger = logging.getLogger()
+
+normal_formatter = logging.Formatter('%(levelname)s: %(message)s')
+debug_formatter = logging.Formatter(
+    '[%(threadName)s][%(module)s.%(funcName)s][%(filename)s:%(lineno)s] %(levelname)s: %(message)s'
+)
+
+normal_console_handler = logging.StreamHandler()
+normal_console_handler.setFormatter(normal_formatter)
+normal_console_handler.setLevel(logging.INFO)
+
+debug_console_handler = logging.StreamHandler()
+debug_console_handler.setFormatter(debug_formatter)
+debug_console_handler.setLevel(logging.DEBUG)
 
 
 # 定义一些类型别名
@@ -239,7 +247,13 @@ def main() -> None:
 
     # 开启调试模式
     if args.debug:
+        logger.addHandler(debug_console_handler)
         logger.setLevel(logging.DEBUG)
+        logger.debug('DEBUG 模式已开启')
+    else:
+        logger.addHandler(normal_console_handler)
+        logger.setLevel(logging.INFO)
+        logger.debug('DEBUG 模式关闭')
 
     main_config_path = args.config or default_main_config_path
     config_encoding = args.config_encoding or default_config_encoding

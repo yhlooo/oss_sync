@@ -55,7 +55,7 @@ class AliyunOssBucket(OssBucket):
         verb = auth_info.get('verb')
         content_md5 = auth_info.get('content-md5') or ''
         content_type = auth_info.get('content-type') or ''
-        date = time.strftime('%a, %d %b %Y %H:%M:%S GMT')
+        date = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
         canonicalized_oss_headers = auth_info.get('canonicalized_oss_headers') or ''
         canonicalized_resource = auth_info.get('canonicalized_resource') or f'/{self.bucket}/'
 
@@ -119,7 +119,7 @@ class AliyunOssBucket(OssBucket):
 
             headers = {
                 'Host': self.host,
-                'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
+                'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
                 'Authorization': self.make_auth({
                     'verb': 'GET',
                 })
@@ -133,7 +133,10 @@ class AliyunOssBucket(OssBucket):
             logger.debug(f'ret = {ret}')
 
             if ret.status_code != 200:
-                logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+                logger.error(
+                    '请求阿里云 OSS 列出对象失败： '
+                    f'[{ret.status_code}] \'{ret.url}\' {ret.headers} - {ret.text}'
+                )
                 return None
 
             etree = ElementTree.fromstring(ret.text)
@@ -176,7 +179,7 @@ class AliyunOssBucket(OssBucket):
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
             'Content-Type': content_type,
             'Content-MD5': content_md5,
             'Content-Disposition': 'inline',
@@ -192,7 +195,10 @@ class AliyunOssBucket(OssBucket):
         logger.debug(f'ret = {ret}')
 
         if ret.status_code != 200:
-            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+            logger.error(
+                '请求阿里云 OSS 上传对象失败： '
+                f'[{ret.status_code}] \'{ret.url}\' {ret.headers} - {ret.text}'
+            )
             return False
 
         return True
@@ -212,7 +218,7 @@ class AliyunOssBucket(OssBucket):
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
             'Authorization': self.make_auth({
                 'verb': 'GET',
                 'canonicalized_resource': f'/{self.bucket}/{obj_key}'
@@ -223,7 +229,10 @@ class AliyunOssBucket(OssBucket):
         logger.debug(f'ret = {ret}')
 
         if ret.status_code != 200:
-            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+            logger.error(
+                '请求阿里云 OSS 下载对象失败： '
+                f'[{ret.status_code}] \'{ret.url}\' {ret.headers} - {ret.text}'
+            )
             return None
 
         return ret.content
@@ -243,7 +252,7 @@ class AliyunOssBucket(OssBucket):
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
             'Authorization': self.make_auth({
                 'verb': 'DELETE',
                 'canonicalized_resource': f'/{self.bucket}/{obj_key}'
@@ -254,7 +263,10 @@ class AliyunOssBucket(OssBucket):
         logger.debug(f'ret = {ret}')
 
         if ret.status_code != 204:
-            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+            logger.error(
+                '请求阿里云 OSS 删除对象失败： '
+                f'[{ret.status_code}] \'{ret.url}\' {ret.headers} - {ret.text}'
+            )
             return False
 
         return True
