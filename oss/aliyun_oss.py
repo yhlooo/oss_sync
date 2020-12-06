@@ -7,6 +7,7 @@
 
 import base64
 import hmac
+import logging
 import time
 from hashlib import sha1, md5
 from typing import Dict, List, Optional, Tuple
@@ -18,20 +19,27 @@ import requests
 from .abstract_oss import OssBucket
 
 
+logger: logging.Logger = logging.getLogger(__name__)
+
+
 class AliyunOssBucket(OssBucket):
     def __init__(self, config: Dict[str, str]):
         """初始化
 
         Args:
-            config:
-        """
-        self.host = config.get('host')
-        self.bucket = config.get('bucket')
-        self.access_key_id = config.get('access_key_id')
-        self.access_key_secret = config.get('access_key_secret')
+            config: 阿里云 OSS 初始化相关配置
 
-        if not self.host or not self.bucket or not self.access_key_id or not self.access_key_secret:
-            raise TypeError('缺少必要的初始化参数')
+        """
+
+        self.host: str = config.get('host')
+        self.bucket: str = config.get('bucket')
+        self.access_key_id: str = config.get('access_key_id')
+        self.access_key_secret: str = config.get('access_key_secret')
+
+        assert self.host, 'host 参数的值不能为空'
+        assert self.bucket, 'bucket 参数的值不能为空'
+        assert self.access_key_id, 'access_key_id 参数的值不能为空'
+        assert self.access_key_secret, 'access_key_secret 参数的值不能为空'
 
     def make_auth(self, auth_info: dict) -> str:
         """计算签名
@@ -41,22 +49,22 @@ class AliyunOssBucket(OssBucket):
 
         Returns:
             签名结果
+
         """
 
         verb = auth_info.get('verb')
-        content_md5 = auth_info.get('content-md5') if auth_info.get('content-md5') else ''
-        content_type = auth_info.get('content-type') if auth_info.get('content-type') else ''
-        date = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
-        canonicalized_oss_headers = (
-            auth_info.get('canonicalized_oss_headers')
-            if auth_info.get('canonicalized_oss_headers')
-            else ''
-        )
-        canonicalized_resource = (
-            auth_info.get('canonicalized_resource')
-            if auth_info.get('canonicalized_resource')
-            else '/' + self.bucket + '/'
-        )
+        content_md5 = auth_info.get('content-md5') or ''
+        content_type = auth_info.get('content-type') or ''
+        date = time.strftime('%a, %d %b %Y %H:%M:%S GMT')
+        canonicalized_oss_headers = auth_info.get('canonicalized_oss_headers') or ''
+        canonicalized_resource = auth_info.get('canonicalized_resource') or f'/{self.bucket}/'
+
+        logger.debug(f'verb = \'{verb}\'')
+        logger.debug(f'content_md5 = \'{content_md5}\'')
+        logger.debug(f'content_type = \'{content_type}\'')
+        logger.debug(f'date = \'{date}\'')
+        logger.debug(f'canonicalized_oss_headers = \'{canonicalized_oss_headers}\'')
+        logger.debug(f'canonicalized_resource = \'{canonicalized_resource}\'')
 
         string_to_sign = (
             f'{verb}\n'
@@ -65,24 +73,29 @@ class AliyunOssBucket(OssBucket):
             f'{date}\n'
             f'{canonicalized_oss_headers}{canonicalized_resource}'
         )
-        print(string_to_sign)
+        logger.debug(f'string_to_sign = \'{string_to_sign}\'')
 
         signature = base64.b64encode(
             hmac.new(
-                self.access_key_secret.encode('utf-8'),
-                string_to_sign.encode('utf-8'),
-                sha1
+                key=self.access_key_secret.encode('utf-8'),
+                msg=string_to_sign.encode('utf-8'),
+                digestmod=sha1
             ).digest()
         ).decode('utf-8')
 
-        return f'OSS {self.access_key_id}:{signature}'
+        auth_header = f'OSS {self.access_key_id}:{signature}'
+        logger.debug(f'auth_header = \'{auth_header}\'')
 
-    def list_objects(self) -> List[Tuple[str, str]]:
+        return auth_header
+
+    def list_objects(self) -> Optional[List[Tuple[str, str]]]:
         """列出对象
 
         列出 Bucket 中的对象
 
         Returns:
+            正常的话返回以下格式内容
+
             [
                 (obj_key_1, obj_md5_1),
                 (obj_key_2, obj_md5_2),
@@ -90,26 +103,43 @@ class AliyunOssBucket(OssBucket):
                 # ...
             ]
 
+            查询失败的话返回 None
+
         """
 
-        objs = []
+        # 结果对象列表
+        objs_list = []
+
+        # 开始的 Key （用于标记分页）
         marker = None
 
         while True:
+
+            logger.debug(f'marker = \'{marker}\'')
+
             headers = {
                 'Host': self.host,
-                'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
+                'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
                 'Authorization': self.make_auth({
                     'verb': 'GET',
                 })
             }
-            res = requests.get(
-                'https://' + self.host + '/{marker}'.format(marker=('?marker=' + marker) if marker else ''),
-                headers=headers
+
+            ret = requests.get(
+                f'https://{self.host}/',
+                headers=headers,
+                params={'marker': marker} if marker else None
             )
-            etree = ElementTree.fromstring(res.text)
+            logger.debug(f'ret = {ret}')
+
+            if ret.status_code != 200:
+                logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+                return None
+
+            etree = ElementTree.fromstring(ret.text)
+
             for content in etree.findall('Contents'):
-                objs.append((content.find('Key').text, content.find('ETag').text[1:-1]))
+                objs_list.append((content.find('Key').text, content.find('ETag').text[1:-1]))
 
             marker = etree.findall('NextMarker')
             if marker:
@@ -117,7 +147,9 @@ class AliyunOssBucket(OssBucket):
             else:
                 break
 
-        return objs
+            logger.debug(f'next_marker = \'{marker}\'')
+
+        return objs_list
 
     def put_object(self, obj_key: str, data: bytes) -> bool:
         """上传对象
@@ -136,11 +168,11 @@ class AliyunOssBucket(OssBucket):
         content_type = self.get_content_type(obj_key)
 
         # 计算Content-MD5
-        content_md5 = base64.b64encode(md5(data).digest()).decode()
+        content_md5 = base64.b64encode(md5(data).digest()).decode('ascii')
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
             'Content-Type': content_type,
             'Content-MD5': content_md5,
             'Content-Disposition': 'inline',
@@ -148,12 +180,18 @@ class AliyunOssBucket(OssBucket):
                 'verb': 'PUT',
                 'content-md5': content_md5,
                 'content-type': content_type,
-                'canonicalized_resource': '/' + self.bucket + '/' + obj_key
+                'canonicalized_resource': f'/{self.bucket}/{obj_key}'
             })
         }
-        res = requests.put('https://' + self.host + '/' + quote(obj_key), data=data, headers=headers)
-        print(res.status_code, res.text, res.headers)
-        return res.status_code == 200
+
+        ret = requests.put(f'https://{self.host}/{quote(obj_key)}', data=data, headers=headers)
+        logger.debug(f'ret = {ret}')
+
+        if ret.status_code != 200:
+            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+            return False
+
+        return True
 
     def get_object(self, obj_key: str) -> Optional[bytes]:
         """下载对象
@@ -170,18 +208,21 @@ class AliyunOssBucket(OssBucket):
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
             'Authorization': self.make_auth({
                 'verb': 'GET',
-                'canonicalized_resource': '/' + self.bucket + '/' + obj_key
+                'canonicalized_resource': f'/{self.bucket}/{obj_key}'
             })
         }
-        res = requests.get('https://' + self.host + '/' + quote(obj_key), headers=headers)
 
-        if res.status_code != 200:
+        ret = requests.get(f'https://{self.host}/{quote(obj_key)}', headers=headers)
+        logger.debug(f'ret = {ret}')
+
+        if ret.status_code != 200:
+            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
             return None
 
-        return res.content
+        return ret.content
 
     def del_object(self, obj_key: str) -> bool:
         """删除对象
@@ -198,11 +239,18 @@ class AliyunOssBucket(OssBucket):
 
         headers = {
             'Host': self.host,
-            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime()),
+            'Date': time.strftime('%a, %d %b %Y %H:%M:%S GMT'),
             'Authorization': self.make_auth({
                 'verb': 'DELETE',
-                'canonicalized_resource': '/' + self.bucket + '/' + obj_key
+                'canonicalized_resource': f'/{self.bucket}/{obj_key}'
             })
         }
-        res = requests.delete('https://' + self.host + '/' + quote(obj_key), headers=headers)
-        return res.status_code == 204
+
+        ret = requests.delete(f'https://{self.host}/{quote(obj_key)}', headers=headers)
+        logger.debug(f'ret = {ret}')
+
+        if ret.status_code != 204:
+            logger.error(f'请求阿里云 OSS 失败： [{ret.status_code}] {ret.headers} - {ret.text}')
+            return False
+
+        return True

@@ -65,7 +65,7 @@ class QcloudCosBucket(OssBucket):
 
         while marker:
 
-            logger.debug(f'Marker = \'{marker}\'')
+            logger.debug(f'marker = \'{marker}\'')
 
             try:
                 ret = self.client.list_objects(Bucket=self.bucket, Marker=marker)
@@ -82,7 +82,7 @@ class QcloudCosBucket(OssBucket):
             ])
             marker = ret.get('NextMarker')
 
-            logger.debug(f'NextMarker = \'{marker}\'')
+            logger.debug(f'next_marker = \'{marker}\'')
 
         return objs_list
 

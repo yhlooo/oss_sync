@@ -353,18 +353,22 @@ class OssBucket:
         '.xap': 'application/x-silverlight-app',
     }
 
-    def list_objects(self) -> List[Tuple[str, str]]:
+    def list_objects(self) -> Optional[List[Tuple[str, str]]]:
         """列出对象
 
         列出 Bucket 中的对象
 
         Returns:
+            正常的话返回以下格式内容
+
             [
                 (obj_key_1, obj_md5_1),
                 (obj_key_2, obj_md5_2),
                 (obj_key_3, obj_md5_3),
                 # ...
             ]
+
+            查询失败的话返回 None
 
         """
         raise NotImplementedError('OSSBucket 的子类中 .list_objects 方法必须被实现')
