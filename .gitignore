@@ -6,3 +6,9 @@ __pycache__/
 
 /config/*.json
 tests/
+
+# secret
+config/*.json
+
+# OS / Filesystem
+.DS_Store
